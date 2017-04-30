@@ -13,6 +13,8 @@ from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import Odometry     
 from geometry_msgs.msg import Twist
 from std_msgs.msg import String 
+import matplotlib.pyplot as plt
+import random
 
 class Controller:
 	def __init__(self):
@@ -85,19 +87,19 @@ class Controller:
 		xa=-3.0    #Posicion Inicial
 		ya=-4.0
 		ta=90.0	
-		Xg=3.0	   #Posicion Final
-		Yg=4.0
+		Xg=1.0   #Posicion Final
+		Yg=-4.0
 		w=0.404
 		rel=1.818*10**(-4)  ##r/N
 		
 		#DATOS SOBRE ULTIMO REPORTE
 	
-		Katt=1
+		Katt=1.0
 		Krep=0.01
-		Rmax=1.0
+		Rmax=1.1
 		
 		Pmin=0.1
-		prop=4
+		prop=3
 		contador=0
 
 		RecX=[]
@@ -107,7 +109,7 @@ class Controller:
 		while True:
 			
 			#Posicion y Direccion de Robot al inicio del ciclo			
-			Trob = math.radians( R.angle )
+			Trob =  math.radians(R.angle)
 			X=R.pose_x
 			Y=R.pose_y
 			
@@ -160,29 +162,36 @@ class Controller:
 
 			#---Mov en el Eje---
 			Zeta=math.degrees(math.atan(Py/Px))
-			delta=(Zeta-Trob)
+			delta=(Zeta-R.angle)
 			if delta>180:
 				delta=delta-360
 			elif delta<-180:
 				delta=delta+360
 
-			n1=round((math.radians(delta)*w)/(4*math.pi*rel))
+			n1=((math.radians(delta)*w)/(4*math.pi*rel))
 			R.nSteps(-n1,n1)
 			
 			#---Movimiento Recto---
 			vel=prop*P
 			Dist=vel*0.01
-			R.moveTill(Dist,vel , 0.0)
+			R.moveTill(Dist,vel , 0)
 	
 			contador += 1
-			print contador
+			print contador,P,vel,Dist,R.pose_x,R.pose_y
+			R.show_distance()
+			R.reset_perim()
+			
         
 		#Imprimir Recorrido
-		print "Cantidad de Procesos (Tiempo de Mov)= "+contador		
+		print 'Cantidad de Procesos (Tiempo de Mov)= '+ str(contador)
 		
-		plt.plot(RecX,RecY)
+		plt.plot(xa,ya,'o',Xg,Yg,'g^',RecX,RecY)
+		plt.title('Trayectoria Robot')
+		plt.xlabel('Eje X [m]')
+		plt.ylabel('Eje Y [m]')
 		plt.xlim([-8,8])
 		plt.ylim([-8,8])
+		plt.grid()
 		plt.show()
 
 
